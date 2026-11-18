@@ -1,0 +1,17 @@
+[package]
+name = "rebro-gui"
+version.workspace = true
+edition = "2024"
+description = "rebro desktop UI (GPUI via gpui-kit)"
+
+[[bin]]
+name = "rebro-gui"
+path = "src/main.rs"
+
+[dependencies]
+rebro-core.workspace = true
+anyhow.workspace = true
+# GPUI + gpui-component + platform in one dependency; pins gpui-pre 0.3.12 with runtime shaders,
+# so no fxc.exe / Windows SDK shader compiler is needed.
+gpui-kit = "=0.10.0"
+webbrowser = "1"

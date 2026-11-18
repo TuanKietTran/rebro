@@ -1,0 +1,55 @@
+name: macos
+# Build and test rebro on a real Mac: unit tests, the CLI + GPUI app (release, as install.sh builds
+# them), the .app bundle, and the end-to-end credential test against the runner's login Keychain.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  macos:
+    runs-on: macos-latest # Apple Silicon
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: macos-cargo-${{ hashFiles('Cargo.lock') }}
+          restore-keys: macos-cargo-
+      - name: unit tests
+        run: cargo test --workspace --exclude rebro-gui
+      - name: e2e (real git + login Keychain)
+        timeout-minutes: 10 # a Keychain access dialog would otherwise wait for a click forever
+        run: |
+          cargo build -p rebro
+          bash tests/e2e-credential.sh target/debug/rebro
+      - name: install.sh (release CLI + rebro.app)
+        timeout-minutes: 25
+        run: |
+          ./install.sh
+          test -x ~/.local/bin/rebro
+          test -x ~/Applications/rebro.app/Contents/MacOS/rebro-gui
+          test -x ~/Applications/rebro.app/Contents/MacOS/rebro
+          plutil -lint ~/Applications/rebro.app/Contents/Info.plist
+          ~/.local/bin/rebro --version
+          ~/.local/bin/rebro import --dry-run
+      - name: GUI starts and stays up
+        timeout-minutes: 5
+        run: |
+          REBRO_HOME=$(mktemp -d) ~/Applications/rebro.app/Contents/MacOS/rebro-gui &
+          pid=$!
+          sleep 15
+          screencapture -x gui.png || true
+          kill -0 "$pid" && echo "rebro-gui running"
+          kill "$pid"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: macos-gui
+          path: gui.png
+          if-no-files-found: ignore

@@ -1,0 +1,19 @@
+[package]
+name = "rebro"
+version.workspace = true
+edition.workspace = true
+description = "One place for GitHub, GitLab, Codeberg/Forgejo and Gitea accounts: persistent tokens, git credential helper, gh/glab sync, TUI"
+
+[[bin]]
+name = "rebro"
+path = "src/main.rs"
+
+[dependencies]
+rebro-core.workspace = true
+anyhow.workspace = true
+serde_json.workspace = true
+clap = { version = "4", features = ["derive"] }
+rpassword = "7"
+ratatui = "0.29"
+crossterm = "0.28"
+webbrowser = "1"
